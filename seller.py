@@ -176,7 +176,7 @@ class Inventory:
         self.spent.append(Expense(amount, text))
         return self
 
-    def buy(self, item: Item) -> "Inventory":
+    def buy(self, item: Sale) -> "Inventory":
         """Purchase items to add to inventory."""
         if item.name not in self.hold:
             self.hold[item.name] = []
