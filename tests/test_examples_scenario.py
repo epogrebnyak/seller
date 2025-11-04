@@ -1,9 +1,9 @@
 import math
-from seller import Inventory, Item, Batch
+from seller import Seller, Item, Stack, InventoryFIFO
 
 
 def test_examples_basic_flow():
-    i = Inventory()
+    i = Seller(0.90 * 25 + 0.75 * 50 + 0.65 * 100)
     t1 = Item("Popcorn")
     t2 = Item("Soda 330 ml")
 
@@ -11,10 +11,12 @@ def test_examples_basic_flow():
     i.buy(t1 @ 0.75 * 50)
     i.buy(t2 @ 0.65 * 100)
 
-    assert i.hold == {
-        "Popcorn": [Batch(0.9, 25), Batch(0.75, 50)],
-        "Soda 330 ml": [Batch(0.65, 100)],
-    }
+    assert i.hold == InventoryFIFO(
+        {
+            "Popcorn": Stack().add(0.9, 25).add(0.75, 50),
+            "Soda 330 ml": Stack().add(0.65, 100),
+        }
+    )
 
     i.sell(t1 @ 2.50 * 35)
     i.sell(t2 @ 1.25 * 50)

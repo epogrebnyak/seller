@@ -1,4 +1,4 @@
-from seller import Catalog, issue_uuid
+from seller import Catalog
 
 
 def test_catalog_register_code_length_and_presence():
@@ -27,10 +27,3 @@ def test_catalog_register_with_explicit_code_and_duplicate():
     assert dupe.name != "ABCD"
     assert dupe.name in c
     assert c[dupe.name] == "Marker"
-
-
-def test_issue_uuid_length_and_uniqueness():
-    codes = {issue_uuid(8) for _ in range(50)}
-    # All codes should be len<=8 and unique
-    assert all(len(code) <= 8 for code in codes)
-    assert len(codes) == 50

@@ -4,15 +4,15 @@ FIFO inventory tracking system in Python
 ## Short example
 
 ```python 
-from seller import Inventory
+from seller import Seller 
 
-i = Inventory()
-pen = Item("Pen")
+i = Seller()
+pen = i.register("Pen")
 i.buy(pen @ 0.55 * 100)
 i.buy(pen @ 0.65 * 100)
-i.sell(pen @ 1.05 * 150)
-print(i.earned) # 70 = (1.05-0.55) * 100 + (1.05-0.65) * 50
-print(i.hold)   # {'Pen': [Batch(purchase_price=0.65, quantity=50)]}
+i.sell(pen @ 1.05 * 151)
+print(i.earned)               # 70.4 = (1.05-0.55) * 100 + (1.05-0.65) * 51
+print(i.hold[pen].quantity)   # 50
 ```
 
 ## Usage ideas

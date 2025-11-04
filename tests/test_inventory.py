@@ -1,20 +1,30 @@
 import math
-from seller import Inventory, Item, Batch, Sale
+import pytest  # type: ignore
+
+from seller import (
+    Seller,
+    Item,
+    Batch,
+    Order,
+    NotInStock,
+    InsufficientStock,
+    InsufficientFunds,
+)
 
 
-def test_buy_and_total():
-    i = Inventory()
+def test_buy():
+    i = Seller(0.5 * 10 + 0.6 * 5)
     pen = Item("Pen")
     i.buy(pen @ 0.5 * 10)
     i.buy(pen @ 0.6 * 5)
 
-    assert i.total("Pen") == 15
     assert i.hold["Pen"][0] == Batch(0.5, 10)
     assert i.hold["Pen"][1] == Batch(0.6, 5)
+    assert i.hold["Pen"].quantity == 15
 
 
 def test_sell_fifo_partial_batches():
-    i = Inventory()
+    i = Seller(0.5 * 10 + 0.6 * 10)
     pen = Item("Pen")
     i.buy(pen @ 0.5 * 10)
     i.buy(pen @ 0.6 * 10)
@@ -37,45 +47,41 @@ def test_sell_fifo_partial_batches():
     sales = i.sales
     assert len(sales) == 1
     s = sales[0]
-    assert isinstance(s, Sale)
+    assert isinstance(s, Order)
     assert s.name == "Pen" and s.price == 1.0 and s.quantity == 15
 
 
+def test_sell_insufficient_cash():
+    i = Seller(0)
+    pen = Item("Pen")
+    with pytest.raises(InsufficientFunds):
+        i.buy(pen @ 0.5 * 5)
+
+
 def test_sell_insufficient_stock_noop():
-    i = Inventory()
+    i = Seller(2.5)
     pen = Item("Pen")
     i.buy(pen @ 0.5 * 5)
-
-    # Try to sell more than available -> no changes
-    i.sell(pen @ 1.0 * 6)
-
-    assert i.hold == {"Pen": [Batch(0.5, 5)]}
-    assert i.fulfilled == []
-    assert i.revenue == 0
-    assert i.cogs == 0
+    with pytest.raises(InsufficientStock):
+        i.sell(pen @ 1.0 * 6)
 
 
-def test_sell_unknown_item_noop():
-    i = Inventory()
-    i.sell(Item("Ghost") @ 1.0 * 1)
-    assert i.hold == {}
-    assert i.fulfilled == []
+def test_sell_unknown_item():
+    i = Seller()
+    with pytest.raises(NotInStock):
+        i.sell(Item("Ghost") @ 1.0 * 1)
 
 
 def test_expenses_and_earned():
-    i = Inventory()
+    i = Seller(cash=0.5 * 10 + 0.6 * 10)
     pen = Item("Pen")
-    i.buy(pen @ 0.5 * 10).sell(pen @ 1.0 * 10)
-
-    gross = i.gross_margin
-    i.pay(2.0, "fee")
-
+    i.buy(pen @ 0.5 * 10).sell(pen @ 1.0 * 10).pay(2.0, "fee")
     assert math.isclose(i.expenses, 2.0)
-    assert math.isclose(i.earned, gross - 2.0)
+    assert math.isclose(i.earned, i.gross_margin - 2.0)
 
 
 def test_multiple_sales_accumulate():
-    i = Inventory()
+    i = Seller(cash=0.5 * 10 + 0.6 * 10)
     pen = Item("Pen")
     i.buy(pen @ 0.5 * 10)
     i.buy(pen @ 0.6 * 10)
