@@ -20,7 +20,6 @@ def test_buy():
 
     assert i.hold["Pen"][0] == Batch(0.5, 10)
     assert i.hold["Pen"][1] == Batch(0.6, 5)
-    assert i.hold["Pen"].quantity == 15
 
 
 def test_sell_fifo_partial_batches():

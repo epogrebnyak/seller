@@ -12,7 +12,7 @@ print(i.hold[pen].quantity)   # 50
 """
 
 from dataclasses import dataclass, field
-from collections import UserDict
+from collections import UserDict, deque
 from abc import ABC
 
 from primitives import UUID, Item, Order, Parcel, Expense
@@ -57,13 +57,13 @@ class InsufficientFunds(SellerException):
 class Inventory(ABC):
     """Abstract base class for inventory management."""
 
-    stack_dict: dict[str, Stack] = field(default_factory=dict)
+    data: dict[str, deque[Batch]] = field(default_factory=dict)
 
-    def __getitem__(self, item: str | Item) -> Stack:
+    def __getitem__(self, item: str | Item) -> deque[Batch]:
         """Get the stack of batches for an item."""
         if isinstance(item, Item):
             item = item.name
-        return self.stack_dict[item]
+        return self.data[item]
 
     def add(self, name, batch: Batch):
         """Purchase items to add to inventory."""
@@ -71,17 +71,17 @@ class Inventory(ABC):
 
     def _add(self, name, batch: Batch):
         """Helper method to add a batch to inventory."""
-        if name not in self.stack_dict:
-            self.stack_dict[name] = Stack()
-        self.stack_dict[name].append(batch)
+        if name not in self.data:
+            self.data[name] = deque()
+        self.data[name].append(batch)
         return self
 
     def assert_available(self, order: Order) -> None:
         """Check if items are available for sale."""
         name = order.name
-        if name not in self.stack_dict:
+        if name not in self.data:
             raise NotInStock(f"Item not in stock: {name}")
-        if self.stack_dict[name].quantity < order.quantity:
+        if Stack(self.data[name]).quantity < order.quantity:
             raise InsufficientStock(f"Insufficient stock for item: {name}")
 
     def to_parcel(self, order: Order, batches: list[Batch]) -> Parcel:
@@ -93,18 +93,19 @@ class Inventory(ABC):
     def pop(self, order: Order):
         """Move items using FIFO method."""
         self.assert_available(order)
-        batches = self.stack_dict[order.name].take_first(order.quantity)
-        return self.to_parcel(order, batches)
+        stack = Stack(self.data[order.name])
+        result = stack.take_first(order.quantity)
+        self.data[order.name] = stack.batches
+        return self.to_parcel(order, result)
+
+    @property
+    def worth(self):
+        """Calculate total worth of inventory."""
+        return sum(Stack(self.data[key]).worth for key in self.data.keys())
 
 
 class InventoryFIFO(Inventory):
     """Manages inventory using FIFO method."""
-
-    def pop(self, order: Order):
-        """Move items using FIFO method."""
-        self.assert_available(order)
-        batches = self.stack_dict[order.name].take_first(order.quantity)
-        return self.to_parcel(order, batches)
 
 
 class InventoryLIFO(Inventory):
@@ -113,8 +114,10 @@ class InventoryLIFO(Inventory):
     def pop(self, order: Order):
         """Move items using LIFO method."""
         self.assert_available(order)
-        batches = self.stack_dict[order.name].take_last(order.quantity)
-        return self.to_parcel(order, batches)
+        stack = Stack(self.data[order.name])
+        result = stack.take_last(order.quantity)
+        self.data[order.name] = stack.batches
+        return self.to_parcel(order, result)
 
 
 class InventoryWA(Inventory):
@@ -123,13 +126,14 @@ class InventoryWA(Inventory):
     def add(self, name, batch: Batch):
         """Purchase items to add to inventory."""
         self._add(name, batch)
-        self.stack_dict[name].equalize_prices()
+        s = Stack(self.data[name]).equalize_prices()
+        self.data[name] = s.batches
         return self
 
 
 @dataclass
 class Seller:
-    """Manages buy and sell operations."""
+    """Manage buy and sell operations."""
 
     cash: float = 0.0
     hold: Inventory = field(default_factory=InventoryFIFO)

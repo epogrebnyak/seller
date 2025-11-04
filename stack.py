@@ -8,25 +8,25 @@ from primitives import Batch
 class Stack:
     """Represent a stack of items."""
 
-    items: deque[Batch] = field(default_factory=deque)
+    batches: deque[Batch] = field(default_factory=deque)
 
     def __getitem__(self, index: int) -> Batch:
         """Get a batch by index."""
-        return self.items[index]
+        return self.batches[index]
 
     def add(self, p: float, q: int | float):
         """Add a batch to the stack."""
-        self.items.append(Batch(p, q))
+        self.batches.append(Batch(p, q))
         return self
 
     def append(self, batch: Batch):
         """Add a batch to the stack."""
-        self.items.append(batch)
+        self.batches.append(batch)
         return self
 
     def extend(self, batches: list[Batch]):
         """Add multiple batches to the stack."""
-        self.items.extend(batches)
+        self.batches.extend(batches)
         return self
 
     def _take(
@@ -34,12 +34,12 @@ class Stack:
     ) -> list[Batch]:
         """Take batches of items from the stack."""
         taken = []
-        while quantity > 0 and self.items:
-            current_batch = self.items[index]
+        while quantity > 0 and self.batches:
+            current_batch = self.batches[index]
             if current_batch.quantity <= quantity:
                 taken.append(current_batch)
                 quantity -= current_batch.quantity
-                getattr(self.items, remove_method)()
+                getattr(self.batches, remove_method)()
             else:
                 partial_batch = Batch(current_batch.purchase_price, quantity)
                 taken.append(partial_batch)
@@ -58,12 +58,12 @@ class Stack:
     @property
     def quantity(self):
         """Return the total quantity of items in the stack."""
-        return sum(batch.quantity for batch in self.items)
+        return sum(batch.quantity for batch in self.batches)
 
     @property
     def worth(self):
-        """Calculate the total value of items in the stack."""
-        return sum(batch.purchase_price * batch.quantity for batch in self.items)
+        """Calculate the total value of batches in the stack."""
+        return sum(batch.purchase_price * batch.quantity for batch in self.batches)
 
     @property
     def average_price(self):
@@ -75,6 +75,6 @@ class Stack:
     def equalize_prices(self):
         """Set all batches purchase price to the same averaged price."""
         price = self.average_price
-        for batch in self.items:
+        for batch in self.batches:
             batch.purchase_price = price
         return self
