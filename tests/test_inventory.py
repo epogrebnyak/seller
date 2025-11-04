@@ -24,7 +24,7 @@ def test_buy():
 
 
 def test_sell_fifo_partial_batches():
-    i = Seller(0.5 * 10 + 0.6 * 10)
+    i = Seller(cash=0.5 * 10 + 0.6 * 10)
     pen = Item("Pen")
     i.buy(pen @ 0.5 * 10)
     i.buy(pen @ 0.6 * 10)

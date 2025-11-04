@@ -12,7 +12,7 @@ items = [
     ]
 ]
 
-i = Seller(cash=200)
+i = Seller(cash=200) # type: ignore
 pen = i.register(
     "BIC Gel-ocity Retractable Quick Dry Gel Pen, Medium Point (0.7mm), Blue"
 )

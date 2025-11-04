@@ -3,7 +3,7 @@ from seller import Seller, Item, Stack, InventoryFIFO
 
 
 def test_examples_basic_flow():
-    i = Seller(0.90 * 25 + 0.75 * 50 + 0.65 * 100)
+    i = Seller(cash=0.90 * 25 + 0.75 * 50 + 0.65 * 100)
     t1 = Item("Popcorn")
     t2 = Item("Soda 330 ml")
 
