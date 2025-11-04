@@ -8,7 +8,7 @@ from seller import (
     Order,
     NotInStock,
     InsufficientStock,
-    InsufficientFunds,
+    NoFunds,
 )
 
 
@@ -18,8 +18,8 @@ def test_buy():
     i.buy(pen @ 0.5 * 10)
     i.buy(pen @ 0.6 * 5)
 
-    assert i.hold["Pen"][0] == Batch(0.5, 10)
-    assert i.hold["Pen"][1] == Batch(0.6, 5)
+    assert i.inventory["Pen"][0] == Batch(0.5, 10)
+    assert i.inventory["Pen"][1] == Batch(0.6, 5)
 
 
 def test_sell_fifo_partial_batches():
@@ -34,7 +34,7 @@ def test_sell_fifo_partial_batches():
     assert len(i.fulfilled) == 1
 
     # Remaining inventory is 5 units @ 0.6
-    assert i.hold["Pen"][0] == Batch(0.6, 5)
+    assert i.inventory["Pen"][0] == Batch(0.6, 5)
 
     # Revenue and COGS
     assert math.isclose(i.revenue, 15.0)
@@ -53,7 +53,7 @@ def test_sell_fifo_partial_batches():
 def test_sell_insufficient_cash():
     i = Seller(0)
     pen = Item("Pen")
-    with pytest.raises(InsufficientFunds):
+    with pytest.raises(NoFunds):
         i.buy(pen @ 0.5 * 5)
 
 
@@ -90,7 +90,7 @@ def test_multiple_sales_accumulate():
 
     # After first sell (12): remaining  - 0.5(0), 0.6(8)
     # After second sell (6): take 6 from 0.6 -> remaining 0.6(2)
-    assert i.hold["Pen"][0] == Batch(0.6, 2)
+    assert i.inventory["Pen"][0] == Batch(0.6, 2)
 
     # Revenue
     assert math.isclose(i.revenue, 12 * 1.0 + 6 * 1.2)

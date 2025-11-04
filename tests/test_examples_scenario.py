@@ -1,5 +1,5 @@
 import math
-from seller import Seller, Item, Stack, InventoryFIFO
+from seller import Seller, Item, InventoryFIFO
 
 
 def test_examples_basic_flow():

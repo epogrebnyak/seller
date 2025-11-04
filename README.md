@@ -12,7 +12,7 @@ i.buy(pen @ 0.55 * 100)
 i.buy(pen @ 0.65 * 100)
 i.sell(pen @ 1.05 * 151)
 print(i.earned)               # 70.4 = (1.05-0.55) * 100 + (1.05-0.65) * 51
-print(i.hold[pen].quantity)   # 50
+print(i.inventory[pen].quantity)   # 50
 ```
 
 ## Usage ideas
